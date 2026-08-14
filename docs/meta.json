@@ -1,0 +1,5 @@
+{
+  "title": "Id Generation",
+  "description": "Prefixed string identifiers and time-ordered UUIDs for .NET, with ASP.NET Core integration.",
+  "pages": ["index", "usage", "aspnetcore"]
+}

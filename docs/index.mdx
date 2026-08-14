@@ -1,0 +1,60 @@
+---
+title: Id Generation
+description: Prefixed string identifiers and time-ordered UUIDs, and when to reach for which.
+---
+
+# Id Generation
+
+Two kinds of identifier, because the identifier you hand to a client and the key your database
+orders rows by want opposite things.
+
+## Packages
+
+| Package | What it is |
+| --- | --- |
+| `ApricotFramework.IdGeneration` | The zero-dependency core: both generators and the format |
+| `ApricotFramework.IdGeneration.AspNetCore` | One call to register them |
+
+Outside an ASP.NET Core host, use the core package on its own — `new DefaultIdGenerator()` needs no
+container and no configuration system.
+
+## Install
+
+```bash
+dotnet add package ApricotFramework.IdGeneration
+dotnet add package ApricotFramework.IdGeneration.AspNetCore
+```
+
+## The two generators
+
+```csharp
+string userId = idGenerator.Generate("usr");   // "usr-3f2a4c1e8b7d40f9a1c26e5d90b3f748"
+Guid key = uuidGenerator.Generate();           // 01a000ca-c96c-7626-945f-e76f2e4c2b10
+```
+
+| | `IIdGenerator` | `IUuidGenerator` |
+| --- | --- | --- |
+| Returns | `string`, prefixed | `Guid` |
+| UUID version | 4, random | 7, time-ordered |
+| Reveals creation time | no | yes, to the millisecond |
+| Storage | 33+ characters of text | 16 bytes in a native column |
+| For | identifiers you expose | keys the database owns |
+
+Nothing stops you from using one where the table suggests the other; the split is about what each
+value leaks and what it costs, not about enforcement.
+
+## The prefix
+
+The prefix says what the identifier denotes, so a value stays meaningful wherever it turns up — a
+log line, a URL, a support conversation. `usr-3f2a…` in a stack trace needs no lookup to place.
+
+## The format
+
+```
+{prefix}-{32 lowercase hex characters}
+usr-3f2a4c1e8b7d40f9a1c26e5d90b3f748
+```
+
+The part after the separator is always exactly 32 characters and never contains a separator itself.
+That is what makes the prefix unconstrained: `ord-line-6489…` reads back as the prefix `ord-line`,
+and there is nothing you can put in a prefix that produces an identifier which fails to parse.
