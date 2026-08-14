@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Zero-dependency identifier generation for .NET: prefixed string ids such as usr-3f2a… backed by UUIDv4, native UUIDv7 Guids for time-ordered database keys, and round-trip parsing of the prefixed form.</Description>
+    <PackageTags>id;identifier;uuid;guid;uuidv7;primary-key</PackageTags>
+  </PropertyGroup>
+
+</Project>

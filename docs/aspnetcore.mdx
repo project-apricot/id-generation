@@ -1,0 +1,62 @@
+---
+title: ASP.NET Core
+description: Registering the generators, and replacing one with your own.
+---
+
+# ASP.NET Core
+
+`ApricotFramework.IdGeneration.AspNetCore` registers the two generators in an ASP.NET Core host.
+
+It takes everything it needs from the ASP.NET Core shared framework, so it has zero NuGet
+dependencies and adds nothing to your dependency tree.
+
+```bash
+dotnet add package ApricotFramework.IdGeneration.AspNetCore
+```
+
+> **Note.** For a host that is not ASP.NET Core — a worker service or a console tool — use the core
+> package directly. `new DefaultIdGenerator()` and `new DefaultUuidGenerator()` need no container,
+> and both behave identically.
+
+## Registration
+
+```csharp
+using ApricotFramework.IdGeneration.AspNetCore.Extensions;
+
+builder.Services.AddIdGeneration();
+```
+
+That is the whole API. It registers `IIdGenerator` and `IUuidGenerator` as singletons, which the
+implementations allow because they hold no state, and adds nothing else — a service collection
+containing only this call has exactly two entries.
+
+There is nothing to configure, and so no configuration section. The version each generator writes is
+a deliberate property of the type rather than a setting: see
+[the two generators](index#the-two-generators).
+
+```csharp
+app.MapGet("/users", (IIdGenerator ids) => new { Id = ids.Generate("usr") });
+```
+
+## Replacing a generator
+
+Both registrations use `TryAdd`, so your own implementation wins whether you register it before or
+after the call:
+
+```csharp
+builder.Services.AddSingleton<IUuidGenerator, Version4UuidGenerator>();
+builder.Services.AddIdGeneration();                       // leaves yours in place
+```
+
+```csharp
+builder.Services.AddIdGeneration();
+builder.Services.AddSingleton<IUuidGenerator, Version4UuidGenerator>();   // also wins
+```
+
+`TryAdd` is what makes the first form work; the second works because the container resolves the last
+registration for a single service. Calling `AddIdGeneration` twice is harmless.
+
+> **Warning.** A replacement changes the values you write from that point on. Anything already
+> stored keeps its original form, and `PrefixedId.TryParse` reads every version, so a switch is safe
+> mid-flight — but old and new rows will interleave, and a UUIDv7 index loses its locality for the
+> ones written the other way.

@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ApricotFramework.IdGeneration/ApricotFramework.IdGeneration.csproj" />
+    <Project Path="src/ApricotFramework.IdGeneration.AspNetCore/ApricotFramework.IdGeneration.AspNetCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests\.editorconfig" />
+    <Project Path="tests/ApricotFramework.IdGeneration.Tests/ApricotFramework.IdGeneration.Tests.csproj" />
+    <Project Path="tests/ApricotFramework.IdGeneration.AspNetCore.Tests/ApricotFramework.IdGeneration.AspNetCore.Tests.csproj" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/ApricotFramework.IdGeneration.Examples.Web/ApricotFramework.IdGeneration.Examples.Web.csproj" />
+  </Folder>
+</Solution>

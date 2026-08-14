@@ -1,0 +1,94 @@
+---
+title: Usage
+description: Generating identifiers, reading them back, and choosing a database column for them.
+---
+
+# Usage
+
+## Prefixed string identifiers
+
+```csharp
+using ApricotFramework.IdGeneration;
+using ApricotFramework.IdGeneration.Impl;
+
+IIdGenerator generator = new DefaultIdGenerator();
+
+var userId = generator.Generate("usr");        // "usr-3f2a4c1e8b7d40f9a1c26e5d90b3f748"
+var orderLineId = generator.Generate("ord-line");
+```
+
+The prefix may be anything non-blank — any length, any script, and it may contain the separator. A
+`null`, empty or whitespace prefix throws, because an identifier without one would neither carry
+meaning nor read back.
+
+> **Note.** The pre-migration library accepted a `null` prefix and wrote `-3f2a…` for it, which is
+> unparseable. If you have such values in a store, they will not read back; nothing else changed.
+
+## Reading an identifier back
+
+```csharp
+if (PrefixedId.TryParse(userId, out var parsed))
+{
+    Console.WriteLine(parsed.Prefix);   // "usr"
+    Console.WriteLine(parsed.Uuid);     // 3f2a4c1e-8b7d-40f9-a1c2-6e5d90b3f748
+}
+```
+
+`TryParse` reports malformed input as `false` rather than throwing, because the value it is handed
+is typically stored or externally supplied rather than a programming mistake. It rejects a truncated
+UUID part, the hyphenated `Guid` form, a missing separator and a blank prefix; it accepts hex in
+either case and writes it back lowercase.
+
+Cost does not depend on input size: the separator's position follows from the length, so a megabyte
+of junk is rejected in constant time instead of being searched.
+
+`PrefixedId` is also how you compose an identifier from a UUID you already have:
+
+```csharp
+var id = new PrefixedId("usr", existingUuid).ToString();
+```
+
+It is a record, so two identifiers with the same prefix and UUID are equal.
+
+## UUIDs for database keys
+
+```csharp
+IUuidGenerator generator = new DefaultUuidGenerator();
+
+Guid key = generator.Generate();
+```
+
+These are UUIDv7: the leading 48 bits are the millisecond of creation, so values generated close
+together sort close together. Inserts land at the end of an index instead of scattering across it,
+which is the whole reason to prefer them over random UUIDs for a key.
+
+Two consequences worth knowing:
+
+- **The creation time is recoverable from the value.** Do not use one as an identifier you hand
+  out. That is what `IIdGenerator` is for.
+- **The benefit depends on how the column is compared.** A column the engine compares byte-wise —
+  PostgreSQL's `uuid`, or a `BINARY(16)` — gets the ordering. SQL Server does *not* order
+  `uniqueidentifier` by comparing the value's bit pattern, so the leading timestamp buys nothing
+  there; use a sequential generator of its own or store the value as `binary(16)`.
+
+Storing the `Guid` natively rather than as text is the point: 16 bytes against 33 or more, which
+matters most in an index, where a narrower key means more rows per page.
+
+## Using a different UUID version
+
+Both generators are interfaces, so replacing one is a class and no configuration:
+
+```csharp
+public sealed class Version4UuidGenerator : IUuidGenerator
+{
+    public Guid Generate() => Guid.NewGuid();
+}
+```
+
+Register it and it wins — see [ASP.NET Core](aspnetcore).
+
+## Thread safety
+
+Both built-in implementations hold no state, so a single instance can serve a whole application and
+is safe to call from any number of threads at once. That is why the registration makes them
+singletons.
