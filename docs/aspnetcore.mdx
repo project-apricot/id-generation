@@ -32,7 +32,7 @@ containing only this call has exactly two entries.
 
 There is nothing to configure, and so no configuration section. The version each generator writes is
 a deliberate property of the type rather than a setting: see
-[the two generators](index#the-two-generators).
+[the two generators](./index.mdx#the-two-generators).
 
 ```csharp
 app.MapGet("/users", (IIdGenerator ids) => new { Id = ids.Generate("usr") });

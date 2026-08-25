@@ -47,4 +47,4 @@ deliberately: string identifiers are UUIDv4 because they travel in URLs and payl
 carries the millisecond it was created in — excellent for index locality, wrong for something you
 hand to a client.
 
-Full documentation: <https://projectapricot.dev>
+Full documentation: <https://projectapricot.dev/docs/id-generation>
